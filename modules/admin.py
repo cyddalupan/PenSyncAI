@@ -37,6 +37,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_display = ('title', 'module', 'writer', 'created_at', 'updated_at', 'score')
     search_fields = ('title', 'writer__username', 'module__title')
     list_filter = ('created_at', 'module', 'writer')
+    readonly_fields = ('score', 'feedback', 'writer', 'created_at', 'updated_at')
 
     def save_model(self, request, obj, form, change):
         obj.score = 99
@@ -44,4 +45,13 @@ class ArticleAdmin(admin.ModelAdmin):
         if not request.user.is_superuser and not change:
             obj.score = 10
             obj.feedback = "Test"
+        if not change or not obj.writer_id:  # If creating a new article
+            obj.writer = request.user
         super().save_model(request, obj, form, change)
+
+    def has_change_permission(self, request, obj=None):
+        # Only allow the writer or a superuser to edit the article
+        if obj and not request.user.is_superuser and obj.writer != request.user:
+            return False
+        return super().has_change_permission(request, obj)
+
