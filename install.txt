@@ -1,4 +1,7 @@
-python -m pip install Django
+## pip uninstall django
+pip install django==4.2
+
 pip install openai
 pip install gunicorn
 pip install python-dotenv
+pip install django-jazzmin

@@ -30,18 +30,20 @@ SECRET_KEY = '&2k7kkgf@$*k9!)s^lnx9t+@%(179swc$hjqv#-2yvc%mh8vev'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["pensync.welfareph.com"]
+ALLOWED_HOSTS = ["pensync.welfareph.com", "*"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rules',
 ]
 
 MIDDLEWARE = [
