@@ -5,3 +5,4 @@ pip install openai
 pip install gunicorn
 pip install python-dotenv
 pip install django-jazzmin
+pip install django-ckeditor
