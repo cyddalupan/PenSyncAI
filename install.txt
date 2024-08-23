@@ -1,3 +1,4 @@
 python -m pip install Django
 pip install openai
-
+pip install gunicorn
+pip install python-dotenv
