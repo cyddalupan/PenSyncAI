@@ -15,7 +15,7 @@ client = OpenAI()
 
 class ArticleInline(admin.TabularInline):
     model = Article
-    fields = ('title_link', 'writer', 'created_at', 'updated_at', 'score', 'feedback')
+    fields = ('title_link', 'writer', 'score', 'sync_level', 'updated_at')
     readonly_fields = ('title_link', 'writer', 'created_at', 'updated_at', 'score', 'feedback')
     can_delete = False
     extra = 0
@@ -43,18 +43,36 @@ class ArticleAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': CKEditorWidget()},
     }
-    list_display = ('title', 'module', 'writer', 'created_at', 'updated_at', 'score')
+    list_display = ('title', 'module', 'writer', 'score', 'sync_level', 'updated_at')
     search_fields = ('title', 'writer__username', 'module__title')
     list_filter = ('created_at', 'module', 'writer')
-    readonly_fields = ('score', 'feedback', 'writer', 'created_at', 'updated_at')
+    readonly_fields = ('score', 'feedback', 'writer', 'sync_level', 'sync_suggestion', 'created_at', 'updated_at')
 
     def save_model(self, request, obj, form, change):
+        # Step 1: Calculate the score and feedback for the current article
         score, suggestion = ai_check_write(obj.content)
         obj.score = score
         obj.feedback = suggestion
+
+        # Step 2: Automatically set the writer if the article is new
         if not change or not obj.writer_id:
             obj.writer = request.user
+
+        # Step 3: Find the best article in the same module
+        best_article = Article.objects.filter(module=obj.module).order_by('-score').first()
+
+        # Step 4: Check if the current article is the best
+        if best_article and obj.score > best_article.score:
+            print("The current article is the new best article.")
+            # Logic for setting this article as the best, if needed
+        elif best_article and obj == best_article:
+            print("The current article is the best article and remains the best.")
+        else:
+            print(f"The best article remains: {best_article.title} (ID: {best_article.id})")
+
+        # Save the object
         super().save_model(request, obj, form, change)
+
 
     def has_change_permission(self, request, obj=None):
         # Only allow the writer or a superuser to edit the article
