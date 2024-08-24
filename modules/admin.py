@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from rules.models import WritingRule
 from .models import Module, Article
 from ckeditor.widgets import CKEditorWidget
 from django.db import models
@@ -61,8 +63,11 @@ class ArticleAdmin(admin.ModelAdmin):
         return super().has_change_permission(request, obj)
 
 def ai_check_write(article):
+    active_rules = WritingRule.objects.filter(is_active=True).order_by('created_at')
+    rules_text = " ".join([rule.rule_text for rule in active_rules])
+    system_message = f"Trigger the score_article function no need for reply. You rate the user article based on these rules: {rules_text}"
     messages = [
-        {"role": "system", "content": "Trigger the score_article function no need for reply.  You rate the user article besed on this rules: use capital letter on the title, sound sad."},
+        {"role": "system", "content": system_message},
         {"role": "user", "content": article},
     ]
 
