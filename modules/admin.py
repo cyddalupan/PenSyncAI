@@ -49,7 +49,7 @@ class ModuleAdmin(admin.ModelAdmin):
         # Use Jazzmin classes for styling the button
         extra_context['add_article_button'] = format_html(
             '<div style="padding-bottom: 10px;">'
-            '<a class="btn btn-success" href="{}">Add New Article</a>'
+            '<a class="btn btn-success btn-block" href="{}">Add New Article</a>'
             '</div>',
             add_article_url
         )
