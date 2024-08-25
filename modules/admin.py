@@ -79,6 +79,18 @@ class ModuleAdmin(admin.ModelAdmin):
 
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        # Allow superusers to delete any module
+        if request.user.is_superuser:
+            return True
+
+        # Allow the creator to delete their module
+        if obj and obj.lead_writer == request.user:
+            return True
+
+        # Deny delete permissions for others
+        return False
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     formfield_overrides = {
@@ -144,6 +156,18 @@ class ArticleAdmin(admin.ModelAdmin):
         if obj.writer == request.user:
             return True
 
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Allow superusers to delete any module
+        if request.user.is_superuser:
+            return True
+
+        # Allow the creator to delete their module
+        if obj and obj.writer == request.user:
+            return True
+
+        # Deny delete permissions for others
         return False
 
     def formatted_content(self, obj):
