@@ -140,7 +140,7 @@ class ArticleAdmin(admin.ModelAdmin):
             obj.sync_level = sync_level
             obj.sync_suggestion = sync_suggestion
         else:
-            obj.sync_level = 0
+            obj.sync_level = obj.score 
             obj.sync_suggestion = "No Other Article, Re-Save Later"
 
         # Save the object
