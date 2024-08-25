@@ -68,19 +68,15 @@ class ModuleAdmin(admin.ModelAdmin):
         return response
 
     def has_change_permission(self, request, obj=None):
-        # Allow superusers to edit any module
         if request.user.is_superuser:
             return True
 
-        # If there's no object yet (e.g., creating a new module), allow access
         if obj is None:
             return True
 
-        # Allow the creator of the module to edit it
         if obj.lead_writer == request.user:
             return True
 
-        # For other users, deny change permissions (i.e., read-only access)
         return False
 
 @admin.register(Article)
@@ -91,7 +87,21 @@ class ArticleAdmin(admin.ModelAdmin):
     list_display = ('title', 'module', 'writer', 'score', 'sync_level', 'updated_at')
     search_fields = ('title', 'writer__username', 'module__title')
     list_filter = ('created_at', 'module', 'writer')
-    readonly_fields = ('score', 'feedback', 'writer', 'sync_level', 'sync_suggestion', 'created_at', 'updated_at')
+    
+    def get_readonly_fields(self, request, obj=None):
+        # If the user is a superuser or the creator, allow editing the content
+        if request.user.is_superuser or (obj and obj.writer == request.user):
+            return ('score', 'feedback', 'writer', 'sync_level', 'sync_suggestion', 'created_at', 'updated_at')
+        # For others, make content read-only and use formatted content
+        return ('formatted_content', 'score', 'feedback', 'writer', 'sync_level', 'sync_suggestion', 'created_at', 'updated_at')
+
+    def get_form(self, request, obj=None, **kwargs):
+        # If the user is not the creator and not a superuser, replace 'content' with 'formatted_content'
+        if not request.user.is_superuser and obj and obj.writer != request.user:
+            self.exclude = ('content',)
+        else:
+            self.exclude = ()
+        return super().get_form(request, obj, **kwargs)
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -121,26 +131,25 @@ class ArticleAdmin(admin.ModelAdmin):
             obj.sync_level = 0
             obj.sync_suggestion = "No Other Article, Re-Save Later"
 
-
         # Save the object
         super().save_model(request, obj, form, change)
-    
+
     def has_change_permission(self, request, obj=None):
-        # Allow superusers to edit any module
         if request.user.is_superuser:
             return True
 
-        # If there's no object yet (e.g., creating a new module), allow access
         if obj is None:
             return True
 
-        # Allow the creator of the module to edit it
         if obj.writer == request.user:
             return True
 
-        # For other users, deny change permissions (i.e., read-only access)
         return False
 
+    def formatted_content(self, obj):
+        return format_html(obj.content)
+
+    formatted_content.short_description = 'Content'
 
 def ai_check_write(article):
     active_rules = WritingRule.objects.filter(is_active=True).order_by('created_at')
