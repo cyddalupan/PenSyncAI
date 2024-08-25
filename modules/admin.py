@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.urls import reverse
 
 from rules.models import WritingRule
 from .models import Module, Article
@@ -38,6 +39,34 @@ class ModuleAdmin(admin.ModelAdmin):
     list_filter = ('created_at', 'lead_writer')
     inlines = [ArticleInline]
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+
+        # Create the URL for adding a new article with the module preselected
+        add_article_url = reverse('admin:modules_article_add')  # Replace 'yourapp' with your app's name
+        add_article_url = f"{add_article_url}?module={object_id}"
+
+        # Inject the button into the context
+        extra_context['add_article_button'] = format_html(
+            '<div style="padding-bottom: 10px;">'
+            '<a class="button" href="{}">Add New Article</a>'
+            '</div>',
+            add_article_url
+        )
+
+        # Render the view with the updated context
+        response = super().change_view(request, object_id, form_url, extra_context)
+
+        if hasattr(response, 'rendered_content'):
+            content = response.rendered_content
+            content = content.replace(
+                '<div class="object-tools">',
+                f'<div class="object-tools">{extra_context["add_article_button"]}'
+            )
+            response.content = content.encode('utf-8')
+
+        return response
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     formfield_overrides = {
@@ -47,6 +76,13 @@ class ArticleAdmin(admin.ModelAdmin):
     search_fields = ('title', 'writer__username', 'module__title')
     list_filter = ('created_at', 'module', 'writer')
     readonly_fields = ('score', 'feedback', 'writer', 'sync_level', 'sync_suggestion', 'created_at', 'updated_at')
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        module_id = request.GET.get('module')
+        if module_id:
+            initial['module'] = module_id
+        return initial
 
     def save_model(self, request, obj, form, change):
         score, suggestion = ai_check_write(obj.content)
@@ -61,10 +97,13 @@ class ArticleAdmin(admin.ModelAdmin):
         if best_article and obj.score >= best_article.score:
             obj.sync_level = obj.score
             obj.sync_suggestion = "Great job! The article is well-written and perfectly aligned. No sync needed."
-        else:
+        elif best_article:
             sync_level, sync_suggestion = ai_sync_article(best_article.content, obj.content)
             obj.sync_level = sync_level
             obj.sync_suggestion = sync_suggestion
+        else:
+            obj.sync_level = 0
+            obj.sync_suggestion = "No Other Article, Re-Save Later"
 
 
         # Save the object

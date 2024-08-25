@@ -147,3 +147,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
+
+JAZZMIN_SETTINGS = {
+    "site_title": "PenSyncAI",
+    "site_header": "PenSyncAI",
+    "site_brand": "PenSyncAI",
+    "site_logo": "PenSyncAI/logo.png",
+}
