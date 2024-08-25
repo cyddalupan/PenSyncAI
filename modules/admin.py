@@ -67,6 +67,22 @@ class ModuleAdmin(admin.ModelAdmin):
 
         return response
 
+    def has_change_permission(self, request, obj=None):
+        # Allow superusers to edit any module
+        if request.user.is_superuser:
+            return True
+
+        # If there's no object yet (e.g., creating a new module), allow access
+        if obj is None:
+            return True
+
+        # Allow the creator of the module to edit it
+        if obj.lead_writer == request.user:
+            return True
+
+        # For other users, deny change permissions (i.e., read-only access)
+        return False
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     formfield_overrides = {
@@ -108,13 +124,23 @@ class ArticleAdmin(admin.ModelAdmin):
 
         # Save the object
         super().save_model(request, obj, form, change)
-
-
+    
     def has_change_permission(self, request, obj=None):
-        # Only allow the writer or a superuser to edit the article
-        if obj and not request.user.is_superuser and obj.writer != request.user:
-            return False
-        return super().has_change_permission(request, obj)
+        # Allow superusers to edit any module
+        if request.user.is_superuser:
+            return True
+
+        # If there's no object yet (e.g., creating a new module), allow access
+        if obj is None:
+            return True
+
+        # Allow the creator of the module to edit it
+        if obj.writer == request.user:
+            return True
+
+        # For other users, deny change permissions (i.e., read-only access)
+        return False
+
 
 def ai_check_write(article):
     active_rules = WritingRule.objects.filter(is_active=True).order_by('created_at')
