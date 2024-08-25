@@ -46,10 +46,10 @@ class ModuleAdmin(admin.ModelAdmin):
         add_article_url = reverse('admin:modules_article_add')  # Replace 'yourapp' with your app's name
         add_article_url = f"{add_article_url}?module={object_id}"
 
-        # Inject the button into the context
+        # Use Jazzmin classes for styling the button
         extra_context['add_article_button'] = format_html(
             '<div style="padding-bottom: 10px;">'
-            '<a class="button" href="{}">Add New Article</a>'
+            '<a class="btn btn-success" href="{}">Add New Article</a>'
             '</div>',
             add_article_url
         )
