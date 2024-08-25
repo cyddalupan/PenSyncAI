@@ -38,6 +38,7 @@ class ModuleAdmin(admin.ModelAdmin):
     search_fields = ('title', 'lead_writer__username')
     list_filter = ('created_at', 'lead_writer')
     inlines = [ArticleInline]
+    readonly_fields = ('lead_writer', 'created_at', 'updated_at')
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -90,6 +91,11 @@ class ModuleAdmin(admin.ModelAdmin):
 
         # Deny delete permissions for others
         return False
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.lead_writer = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
